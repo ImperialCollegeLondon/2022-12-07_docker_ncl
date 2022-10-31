@@ -16,12 +16,12 @@ This course aims to introduce the use of containers with the goal of using them 
 > - Appreciate issues around reproducibility in software, understand how containers can address some of these issues and what the limits to reproducibility using containers are
 {: .objectives}
 
-The course will take place at [Western General Hospital, University of Edinburgh](https://www.archer2.ac.uk/training/locations/western-general).
+The course will take place at the [University of Newcastle](https://www.ncl.ac.uk/who-we-are/contact/maps/), in the [Keeton Lomas Lecture Theatre](https://roomfinder.ncl.ac.uk/room.php?r=ROM66D2CC83-2B06-4EAD-AB10-D11FE822826E) in the Armstrong Building (building 22 on the [campus map](https://www.ncl.ac.uk/media/wwwnclacuk/whoweare/files/NU_Region%20City%20%20Campus%20Maps_March%202022_Web_compressed.pdf)  - see page 2 of the PDF).
 
-Details of the course, including registration links can be found on [the ARCHER2 website](https://www.archer2.ac.uk/training/courses/220620-containers/).
+Details of the course, including registration links can be found on [the ARCHER2 website](https://www.archer2.ac.uk/training/courses/221207-containers/).
 
 The material on this site corresponds to Day 1 of the course - covering Docker. Day 2 of the course will look at Singularity and 
-[the day 2 material is available on a separate site](https://epcced.github.io/2022-06-21_singularity_edi-wg/).
+[the day 2 material is available on a separate site](https://imperialcollegelondon.github.io/2022-12-08_singularity_ncl/).
 
 > ## Prerequisites
 >
