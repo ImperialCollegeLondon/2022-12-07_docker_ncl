@@ -348,7 +348,7 @@ an Arm64 architecture - where people you are sharing container images with may b
 container images on systems with an x86_64 architecture - where some of the people using the container images may be 
 using Arm64 architecture system.
 
-> ## Docker architecture (platform) labels
+> ## Docker architecture (platform) labels
 >
 > Docker supports different processor architectures as part of the *platform* specification of the container image. The platform
 > consists of a specification of the operating system kernel (usually `linux`) and the processor architecture. Container images
@@ -368,7 +368,7 @@ You typically have two options to build Docker container images to support both 
 - Build multiple copies of the container image, each with a different architecture
 - Build a single container image that supports multiple architectures
 
-> ## Running x86 containers on Arm-based Mac 
+> ## Running x86_64 architecture containers on Arm-based Mac 
 >
 > The situation is slightly more complicated than this as Arm-based Mac *can* successfully run many x86 architecture
 > containers as macOS has a piece of software called [Rosetta](https://en.wikipedia.org/wiki/Rosetta_(software))
@@ -376,7 +376,7 @@ You typically have two options to build Docker container images to support both 
 > so, if you can generate Arm-specific container images, they will generally have a better success rate on Macs.
 {: .callout}
 
-### Build a Docker container image for a particular processor type
+### Build a Docker container image for a particular processor architecture
 
 This approach is the simplest as it does not require you to use more complex container image build systems
 (i.e. `buildx`, described below). The disadvantage is that you need to run multiple build commands and label
