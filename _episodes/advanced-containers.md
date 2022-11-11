@@ -335,6 +335,212 @@ the screen. The bigger your container image becomes, the harder it will be to ea
 > install such commands before using them within `RUN` statements.
 {: .callout}
 
+## Docker image compatibility
+
+Although we have noted that one of the strengths of container images is that you can build them and then 
+reuse on different systems running Linux, macOS and Windows, there is a particular compatibility issue
+that you need to be aware of related to different processor types.
+
+Until quite recently, this was not a big issue as almost all systems used x86_64 architecture processors (Intel and AMD)
+but now that many Apple laptops and workstations use Arm64-based architecture processors (branded as *Apple Silicon*) you
+may need to be aware of these issues. This applies for the cases where you are generating container images on systems with
+an Arm64 architecture - where people you are sharing container images with may be using x86_64 architectures - and when you are generating
+container images on systems with an x86_64 architecture - where some of the people using the container images may be 
+using Arm64 architecture system.
+
+> ## Docker architecture (platform) labels
+>
+> Docker supports different processor architectures as part of the *platform* specification of the container image. The platform
+> consists of a specification of the operating system kernel (usually `linux`) and the processor architecture. Container images
+> for the x86_64 architecture usually use the `linux/amd64` platform and those for the Arm64 architecture usually use the
+> `linux/arm64` platform.
+{: .callout}
+
+As container images contain compiled software, they are typically only compatible with systems that have the 
+same architecture as the architecture specified when building the container image. When you do not
+explicitly specify the container image architecture then it will be built using the same architecture
+as the system where the container image was built. So, for all the container images you have built so far,
+they will be built for the same architecture as your system - typically x86 unless you are using 
+an Arm-based Mac.
+
+You typically have two options to build Docker container images to support both x86 and Arm architectures:
+
+- Build multiple copies of the container image, each with a different architecture
+- Build a single container image that supports multiple architectures
+
+> ## Running x86 containers on Arm-based Mac 
+>
+> The situation is slightly more complicated than this as Arm-based Mac *can* successfully run many x86 architecture
+> containers as macOS has a piece of software called [Rosetta](https://en.wikipedia.org/wiki/Rosetta_(software))
+> that can translate x86 instructions to Arm instructions on-the-fly. However, this does not always work well
+> so, if you can generate Arm-specific container images, they will generally have a better success rate on Macs.
+{: .callout}
+
+### Build a Docker container image for a particular processor type
+
+This approach is the simplest as it does not require you to use more complex container image build systems
+(i.e. `buildx`, described below). The disadvantage is that you need to run multiple build commands and label
+your container images differently. When using your container images, other people must be aware of the differences
+and make sure they use the container image with the correct format.
+
+You specify the architecture (*platform*) to build for with the `--platform` flag to the `docker image build` command.
+For example, to build an x86 architecture version of the `alpine-sum` container image, we would use:
+
+```
+docker image build --platform linux/amd64 -t alice/alpine-sum-x86 .
+```
+{: .language-bash}
+
+You can check that the image has been built for the correct architecture using the `docker image inspect`
+command. Look for the line containing "Architecture":
+
+~~~
+docker image inspect alice/alpine-sum-x86
+~~~
+{: .language-bash}
+~~~
+...trim...
+        "Architecture": "amd64",
+        "Os": "linux",
+...trim...
+~~~
+{: .output}
+
+> ## Exercise: Build the Arm version of the `alpine-sum` container image
+>
+> Build a version of the `alpine-sum` container image for the arm64 platform. Can
+> you check that the image has been successfully built with the correct architecture?
+>
+> > ## Solution
+> >
+> > The correct option is `--platform linux/arm64`:
+> > ~~~
+> > $ docker image build --platform linux/arm64 -t alice/alpine-sum-arm64 .
+> > ~~~
+> > {: .language-bash}
+> >
+> > You can check the image has the correct architecture with:
+> > ~~~
+> >docker image inspect alice/alpine-sum-arm64
+> > ~~~
+> > {: .language-bash}
+> > ~~~
+> > ...trim...
+> >         "Architecture": "arm64",
+> >         "Os": "linux",
+> > ...trim...
+> > ~~~
+> > {: .output}
+> >
+> {: .solution}
+{: .challenge}
+
+### Build a multi-format Docker container image
+
+Most of the container images on Docker Hub from major providers (e.g. the official Python container images)
+typically provide a single multi-platform container image. When you pull the image from Docker Hub, your
+Docker instance knows to get the version of the multi-platform container image that best matches your local
+platform. (On an Arm architecture Mac, if an Arm version of the container image does not exist it will pull
+the `amd64` version and try to run it using the Rosetta software.)
+
+In order to build multi-platform container images we need to use a different builder tool as the default 
+Docker container image build tool does not support building multi-platform images. If you are using a recent
+version of Docker Desktop on macOS or Windows this build tool comes pre-installed. However, you need to 
+initialise a new builder that uses this tool. We do this with the `docker buildx create` command:
+
+~~~
+docker buildx create --name multiplatform 
+~~~
+{: .language-bash}
+~~~
+multiplatform
+~~~
+{: .output}
+
+Next, you need to tell Docker to use the new builder engine with:
+
+~~~
+docker buildx use multiplatform
+~~~
+{: .language-bash}
+
+One caveat when building multi-platform container images: they cannot be stored locally so they must be
+pushed to Docker Hub (or another online repository) as part of the build process.
+
+Now, finally, we are ready to build our multi-platform container image using our new builder engine and
+push it to Docker Hub:
+
+~~~
+docker buildx build --platform linux/amd64,linux/arm64 -t aturnerepcc/alpine-sum-multi --push .
+~~~
+{: .language-bash}
+
+Note:
+
+- We specify the two platforms we want to build for: `--platform linux/amd64,linux/arm64`
+- We tell Docker to push to Docker Hub once the container images are built: `--push`
+
+Once this has been done, you can inspect the container image on Docker Hub and verify
+it contains variants for both platforms. If you go to Docker Hub and select the container
+image. Use `See all` in the "Tags and scans" section to reveal what platforms are supported
+for the container image.
+
+If you then pull the container image, you will get the version that best matches your
+current platform. For example, on my M1 Mac, I get the `arm64` version:
+
+
+~~~
+docker pull aturnerepcc/alpine-sum-multi
+docker image inspect aturnerepcc/alpine-sum-multi
+~~~
+{: .language-bash}
+~~~
+Using default tag: latest
+latest: Pulling from aturnerepcc/alpine-sum-multi
+9b18e9b68314: Already exists 
+41fd814ce19c: Pull complete 
+cb7960f11e5f: Pull complete 
+30433674418c: Pull complete 
+Digest: sha256:d7110318ffacf1dae113d8569bd0e02056ded923ca481957423d01a65302f727
+Status: Downloaded newer image for aturnerepcc/alpine-sum-multi:latest
+docker.io/aturnerepcc/alpine-sum-multi:latest
+...trim...
+        "Architecture": "arm64",
+        "Os": "linux",
+...trim...
+~~~
+{: .output}
+
+
+> ## Exercise: Build a multi-platform container image
+>
+> Build a multi-platform version of one of the container images we have built so far in this
+> lesson and push it to Docker Hub. Can you check on Docker Hub and see that the container is
+> genuinely multi-platform? If another course attendee has a laptop with a different architecture
+> to yours, do they get the correct version of the container image if they pull from Docker Hub?
+>
+{: .challenge}
+
+### Important: restoring the standard Docker builder
+
+To return to the standard Docker builder - you probably want to do this!
+
+~~~
+docker buildx use default
+~~~
+{: .language-bash}
+
+Next time you want to build a multi-platform container image you just need to switch back to 
+the alternative builder with:
+
+~~~
+docker buildx use multiplatform
+~~~
+{: .language-bash}
+
+You do not need to initialise it again.
+
+
 ## More fancy `Dockerfile` options
 
 We can expand on the example above to make our container image even more "automatic".
