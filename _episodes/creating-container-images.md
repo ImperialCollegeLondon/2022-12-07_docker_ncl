@@ -53,6 +53,9 @@ Linux has a installation tool called `apk` that we can use to install Python 3.
 ~~~
 {: .language-bash}
 
+(The `--update` option to `apk add` tells the apk to make sure it has an up to date
+list of software available in the Alpine software repository.)
+
 We can test our installation by running a Python command:
 ~~~
 /# python3 --version
